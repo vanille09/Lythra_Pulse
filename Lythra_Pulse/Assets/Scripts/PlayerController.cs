@@ -2,39 +2,81 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float velocidad = 5f;
-    public float fuerzaSalto = 7f;
+    [Header("Configuración de Movimiento")]
+    public float moveSpeed = 100f;      // tu valor
+    public float jumpForce = 30f;       // tu valor
+
+    [Header("Configuración de Suelo")]
+    public Transform groundCheck;           
+    public LayerMask groundLayer;           
+    public float groundCheckRadius = 0.3f;  // AGRANDADO para que sí detecte piso
+
     private Rigidbody2D rb;
-
-    private bool enSuelo;
-
-    public Transform detectorSuelo;
-    public float radioSuelo = 0.2f;
-    public LayerMask pisoLayer;
+    private float horizontalInput;
+    private bool isGrounded;
+    private bool isFacingRight = true;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        if (groundCheck == null)
+            Debug.LogError("⚠ Debes asignar 'groundCheck' en el Inspector.");
     }
 
     void Update()
     {
-        float mov = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(mov * velocidad, rb.velocity.y);
+        // *** DEBUG PARA VER SI FUNCIONA LA DETECCIÓN ***
+        Debug.Log("Grounded: " + isGrounded);
 
-        enSuelo = Physics2D.OverlapCircle(detectorSuelo.position, radioSuelo, pisoLayer);
+        // Movimiento horizontal (A, D, flechas)
+        horizontalInput = Input.GetAxisRaw("Horizontal");
 
-        if (Input.GetButtonDown("Jump") && enSuelo)
+        // Salto
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            rb.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        }
+
+        FlipSprite();
+    }
+
+    void FixedUpdate()
+    {
+        // Detección de suelo
+        isGrounded = Physics2D.OverlapCircle(
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer
+        );
+
+        // Movimiento
+        rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+    }
+
+    void FlipSprite()
+    {
+        if (horizontalInput < 0 && isFacingRight)
+        {
+            isFacingRight = false;
+            transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x),
+                                                transform.localScale.y,
+                                                transform.localScale.z);
+        }
+        else if (horizontalInput > 0 && !isFacingRight)
+        {
+            isFacingRight = true;
+            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x),
+                                               transform.localScale.y,
+                                               transform.localScale.z);
         }
     }
 
-    void OnCollisionEnter2D(Collision2D other)
+    void OnDrawGizmosSelected()
     {
-        if (other.gameObject.CompareTag("Enemy"))
-        {
-            GameManager.Instance.Morir();
-        }
+        if (groundCheck == null) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
 }
