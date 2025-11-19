@@ -2,17 +2,14 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Configuración de Movimiento")]
-    public float moveSpeed = 50f;
-    public float jumpForce = 75f;
+    public float moveSpeed = 100f;
+    public float jumpForce = 120f;
 
-    [Header("Configuración de Suelo")]
     public Transform groundCheck;
     public LayerMask groundLayer;
     public float groundCheckRadius = 0.2f;
 
-    [Header("Física Extra")]
-    public float fallMultiplier = 10f;
+    public float fallMultiplier = 30f;
 
     private Rigidbody2D rb;
     private float horizontalInput;
@@ -27,12 +24,17 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         horizontalInput = Input.GetAxis("Horizontal");
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        // Salto
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            rb.velocity = new Vector2(rb.velocity.x, 0);
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        }
+
+        // Subida más rápida si el salto está en curso
+        if (rb.velocity.y > 0 && !Input.GetButton("Jump"))
+        {
+            rb.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
         }
 
         // Caída rápida
@@ -41,16 +43,8 @@ public class PlayerController : MonoBehaviour
             rb.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
         }
 
-        FlipSprite();
-    }
-
-    void FixedUpdate()
-    {
-        // Detectar suelo
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-
-        // Movimiento
         rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
+        FlipSprite();
     }
 
     void FlipSprite()
@@ -72,5 +66,21 @@ public class PlayerController : MonoBehaviour
         if (groundCheck == null) return;
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Enemy") || collision.collider.CompareTag("Río"))
+        {
+            GameManager.instance.GameOver();
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Enemy") || collision.CompareTag("Río"))
+        {
+            GameManager.instance.GameOver();
+        }
     }
 }
