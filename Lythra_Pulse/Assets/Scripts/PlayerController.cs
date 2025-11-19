@@ -4,7 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Configuración de Movimiento")]
     public float moveSpeed = 50f;
-    public float jumpForce = 50f;
+    public float jumpForce = 75f;
 
     [Header("Configuración de Suelo")]
     public Transform groundCheck;
@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
 
     [Header("Física Extra")]
-    public float fallMultiplier = 3f;
+    public float fallMultiplier = 10f;
 
     private Rigidbody2D rb;
     private float horizontalInput;

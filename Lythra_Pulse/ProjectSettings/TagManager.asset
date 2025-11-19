@@ -12,11 +12,13 @@ TagManager:
   - Cuarzo
   - Piso
   - Enemy
+  - Rio
+  - Collectible
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Piso
+  - Ground
   - Water
   - UI
   - Escalones
